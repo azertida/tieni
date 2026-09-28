@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tieni</title>
+<meta name="description" content="Les promos en trop, entre proches.">
+<meta name="theme-color" content="#1F4D3A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Tieni">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #EEF2EC;
+  --paper: #FFFFFF;
+  --ink: #1C2321;
+  --muted: #4F5B55;
+  --green: #1F4D3A;
+  --tag: #FFD84D;
+  --tomato: #B42D25;
+  --line: #C9D3C6;
+  --ok: #2F6B3F;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: 'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 18px; line-height: 1.5;
+  background: var(--bg); color: var(--ink);
+  padding: env(safe-area-inset-top, 0) 0 env(safe-area-inset-bottom, 0);
+  overflow-wrap: anywhere;
+}
+.wrap { max-width: 34rem; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+header { display: flex; align-items: baseline; flex-wrap: wrap; gap: .25rem .75rem; margin-bottom: 1rem; }
+.brand { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 2.4rem; color: var(--green); line-height: 1; white-space: nowrap; overflow-wrap: normal; }
+.baseline { color: var(--muted); }
+
+nav { display: flex; background: var(--paper); border: 2px solid var(--green); border-radius: 12px; overflow: hidden; margin-bottom: 1.5rem; }
+nav[hidden] { display: none; }
+nav button { flex: 1; font: inherit; font-weight: 600; padding: .7rem .4rem; border: 0; background: none; color: var(--green); cursor: pointer; }
+nav button + button { border-left: 2px solid var(--green); }
+nav button[aria-current="true"] { background: var(--green); color: #fff; }
+
+h2 { font-size: 1.35rem; margin-bottom: .75rem; }
+section[hidden] { display: none; }
+
+label { display: block; font-weight: 600; margin-bottom: .3rem; }
+.hint { font-weight: 400; color: var(--muted); }
+.field { margin-bottom: 1rem; }
+input, select {
+  font: inherit; width: 100%; padding: .65rem .75rem;
+  border: 2px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink);
+}
+input:focus, select:focus, button:focus-visible { outline: 3px solid var(--tag); outline-offset: 2px; border-color: var(--green); }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+
+.switch { display: flex; gap: .5rem; margin-bottom: 1rem; }
+.switch label { flex: 1; margin: 0; }
+.switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.switch span { display: block; text-align: center; padding: .65rem .5rem; border: 2px solid var(--line); border-radius: 10px; background: var(--paper); cursor: pointer; }
+.switch input:checked + span { border-color: var(--green); background: var(--green); color: #fff; }
+.switch input:focus-visible + span { outline: 3px solid var(--tag); outline-offset: 2px; }
+
+.btn { font: inherit; font-weight: 700; display: block; width: 100%; padding: .85rem 1rem; border-radius: 12px; border: 0; background: var(--green); color: #fff; cursor: pointer; text-align: center; text-decoration: none; }
+.btn.ghost { background: var(--paper); color: var(--green); border: 2px solid var(--green); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn + .btn { margin-top: .6rem; }
+.link { font: inherit; background: none; border: 0; color: var(--green); text-decoration: underline; cursor: pointer; padding: .25rem 0; }
+.link.danger { color: var(--tomato); }
+
+/* L'étiquette de prix : l'élément central */
+.tag {
+  position: relative; background: var(--tag); color: var(--ink);
+  clip-path: polygon(1.5rem 0, 100% 0, 100% 100%, 1.5rem 100%, 0 50%);
+  padding: 1rem 1.1rem 1rem 2.7rem; border-radius: 0 10px 10px 0; margin: 1rem 0;
+}
+.tag::before { content: ''; position: absolute; left: 1.05rem; top: 50%; width: .8rem; height: .8rem; margin-top: -.4rem; border-radius: 50%; background: var(--bg); }
+.tag .prod { font-weight: 700; font-size: 1.2rem; line-height: 1.25; }
+.tag .shop { color: #3D3A2A; }
+.tag .promo { display: inline-block; margin-top: .4rem; font-weight: 700; background: var(--ink); color: var(--tag); padding: .05rem .5rem; border-radius: 6px; }
+.tag .price { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; margin-top: .5rem; }
+.tag .now { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 3rem; line-height: 1; }
+.tag .was { text-decoration: line-through; text-decoration-color: var(--tomato); text-decoration-thickness: 2px; color: #3D3A2A; }
+.tag .per { color: #3D3A2A; }
+
+.calc { background: var(--paper); border-radius: 10px; padding: .75rem 1rem; margin-bottom: 1rem; color: var(--muted); }
+.calc div { display: flex; justify-content: space-between; gap: 1rem; }
+.calc span:last-child { white-space: nowrap; }
+.calc div:last-child { color: var(--ink); font-weight: 700; border-top: 1px solid var(--line); margin-top: .35rem; padding-top: .35rem; }
+.warn { background: #FBE9E7; color: #7A1F19; border-radius: 10px; padding: .75rem 1rem; margin-bottom: 1rem; }
+.note { color: var(--muted); margin: .75rem 0; }
+
+.card { background: var(--paper); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border-left: 6px solid var(--tag); }
+.card.old { border-left-color: var(--line); }
+.card h3 { font-size: 1.1rem; line-height: 1.3; }
+.card .meta { color: var(--muted); }
+.stock { font-weight: 700; margin: .5rem 0; }
+.res { display: grid; grid-template-columns: 1fr; gap: .25rem .75rem; align-items: center; padding: .55rem 0; border-top: 1px solid var(--line); }
+.res .who { font-weight: 600; }
+.chips { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+.chip { font: inherit; font-size: 1rem; padding: .3rem .65rem; border-radius: 999px; border: 2px solid var(--line); background: var(--paper); color: var(--muted); cursor: pointer; }
+.chip[aria-pressed="true"] { border-color: var(--ok); background: var(--ok); color: #fff; }
+.add { display: grid; grid-template-columns: 1fr 5rem auto; gap: .5rem; margin-top: .75rem; }
+.add .btn { width: auto; padding: .6rem .9rem; }
+.actions { display: flex; gap: 1.25rem; flex-wrap: wrap; margin-top: .75rem; }
+
+.debt { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.debt strong { font-size: 1.15rem; }
+.debt-lines { color: var(--muted); margin: .3rem 0 .5rem; }
+
+.qty { display: flex; align-items: center; gap: .75rem; }
+.qty button { font: inherit; font-weight: 700; font-size: 1.4rem; width: 3rem; height: 3rem; border-radius: 10px; border: 2px solid var(--green); background: var(--paper); color: var(--green); cursor: pointer; }
+.qty output { font-size: 1.6rem; font-weight: 700; min-width: 2ch; text-align: center; }
+.total { font-size: 1.2rem; font-weight: 700; margin: 1rem 0; }
+
+.empty { background: var(--paper); border-radius: 12px; padding: 1.25rem; color: var(--muted); }
+.toast { position: fixed; left: 50%; bottom: calc(1.25rem + env(safe-area-inset-bottom, 0)); transform: translateX(-50%); background: var(--ink); color: #fff; padding: .7rem 1.1rem; border-radius: 10px; max-width: 90vw; z-index: 10; }
+.toast[hidden] { display: none; }
+@media (prefers-reduced-motion: no-preference) { .tag { transition: transform .2s; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">Tieni</div>
+    <p class="baseline">Les promos en trop, entre proches.</p>
+  </header>
+
+  <nav id="nav">
+    <button data-view="nouvelle" aria-current="true">Nouvelle</button>
+    <button data-view="annonces">Mes annonces</button>
+    <button data-view="comptes">Comptes</button>
+  </nav>
+
+  <main>
+    <!-- Créer une annonce -->
+    <section id="v-nouvelle">
+      <form id="form" novalidate>
+        <div class="switch" role="radiogroup" aria-label="Situation">
+          <label><input type="radio" name="mode" value="a" checked><span>Déjà acheté</span></label>
+          <label><input type="radio" name="mode" value="v"><span>Je vais acheter</span></label>
+        </div>
+
+        <div class="field" id="f-quand" hidden>
+          <label for="quand">Quand y vas-tu&#8239;?</label>
+          <input id="quand" placeholder="samedi matin" autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="produit">Produit</label>
+          <input id="produit" placeholder="Café en grains 1 kg" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="magasin">Magasin</label>
+          <input id="magasin" placeholder="Delhaize Roodebeek" autocomplete="off">
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="promo">Promo</label>
+            <select id="promo">
+              <option value="1+1|100">1+1</option>
+              <option value="2+1|100">2+1</option>
+              <option value="2+2|100" selected>2+2</option>
+              <option value="3+1|100">3+1</option>
+              <option value="2e à -50&#8239;%|50">2e à -50&#8239;%</option>
+              <option value="2e à -70&#8239;%|70">2e à -70&#8239;%</option>
+              <option value="autre">Autre remise…</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="normal">Prix normal <span class="hint">(1 article)</span></label>
+            <input id="normal" inputmode="decimal" placeholder="2,00" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="field" id="f-autre" hidden>
+          <label for="pct">Remise sur l'article cédé <span class="hint">(en %)</span></label>
+          <input id="pct" inputmode="numeric" placeholder="60" autocomplete="off">
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="nb">Articles à céder</label>
+            <input id="nb" type="number" min="1" max="30" value="2" inputmode="numeric">
+          </div>
+          <div class="field">
+            <label for="dlc">À consommer avant <span class="hint">(facultatif)</span></label>
+            <input id="dlc" type="date">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="prenom">Ton prénom</label>
+          <input id="prenom" placeholder="Ana" autocomplete="given-name">
+        </div>
+
+        <div id="preview"></div>
+        <button class="btn" id="creer" type="submit" disabled>Créer l'annonce</button>
+      </form>
+    </section>
+
+    <!-- Après création -->
+    <section id="v-partage" hidden>
+      <h2>Annonce créée</h2>
+      <div id="partage-tag"></div>
+      <p class="note">Envoie le lien à tes proches. Quand quelqu'un te répond, note la réservation dans «&#8239;Mes annonces&#8239;».</p>
+      <button class="btn" id="partager">Partager l'annonce</button>
+      <button class="btn ghost" id="copier">Copier le lien</button>
+      <button class="btn ghost" id="encore">Créer une autre annonce</button>
+    </section>
+
+    <!-- Mes annonces -->
+    <section id="v-annonces" hidden>
+      <div id="liste"></div>
+    </section>
+
+    <!-- Comptes -->
+    <section id="v-comptes" hidden>
+      <h2>Qui te doit quoi</h2>
+      <div id="dettes"></div>
+    </section>
+
+    <!-- Vue destinataire -->
+    <section id="v-recu" hidden>
+      <div id="recu"></div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+const KEY = 'tieni:annonces';
+const KP = 'tieni:prenom';
+const KD = 'tieni:prenom-dest';
+const NB = '\u202F';
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const eur = v => new Intl.NumberFormat('fr-BE', { style: 'currency', currency: 'EUR' }).format(v);
+const r2 = v => Math.round(v * 100) / 100;
+const pad = n => String(n).padStart(2, '0');
+const today = () => { const t = new Date(); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; };
+const fmtDate = d => new Date(d + 'T12:00').toLocaleDateString('fr-BE', { weekday: 'long', day: 'numeric', month: 'long' });
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+// Règles de prix
+const coutEnPlus = a => r2(a.n * (1 - a.r / 100));
+const prixCession = a => r2(coutEnPlus(a) + 0.25 * a.n);
+const eligible = a => a.r >= 50;
+
+// Stockage local (préfixe tieni:)
+function load() { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } }
+function save(list) { try { localStorage.setItem(KEY, JSON.stringify(list)); } catch {} }
+function getP(k) { try { return localStorage.getItem(k) || ''; } catch { return ''; } }
+function setP(k, v) { try { localStorage.setItem(k, v); } catch {} }
+
+// Encodage de l'annonce dans le lien
+function enc(o) {
+  const bytes = new TextEncoder().encode(JSON.stringify(o));
+  let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b));
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function dec(s) {
+  const b64 = s.replace(/-/g, '+').replace(/_/g, '/');
+  const bin = atob(b64 + '==='.slice((b64.length + 3) % 4));
+  return JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))));
+}
+const pub = a => ({ i: a.i, m: a.m, p: a.p, s: a.s, t: a.t, r: a.r, n: a.n, q: a.q, d: a.d, w: a.w, f: a.f });
+const lien = a => location.origin + location.pathname + '#a=' + enc(pub(a));
+
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, 3200);
+}
+
+async function partager(texte) {
+  if (navigator.share) {
+    try { await navigator.share({ text: texte }); return; }
+    catch (e) { if (e.name === 'AbortError') return; }
+  }
+  try { await navigator.clipboard.writeText(texte); toast('Message copié. Colle-le dans ta conversation.'); }
+  catch { prompt('Copie ce message :', texte); }
+}
+
+function texteAnnonce(a) {
+  const base = a.m === 'v'
+    ? `Tieni${NB}: ${a.t} sur ${a.p} chez ${a.s}. J'y vais ${a.w || 'bientôt'}. Qui en veut${NB}? ${eur(prixCession(a))} pièce au lieu de ${eur(a.n)}, ${a.q} disponible${a.q > 1 ? 's' : ''}.`
+    : `Tieni${NB}: ${a.t} sur ${a.p} chez ${a.s}. J'en cède ${a.q}, à ${eur(prixCession(a))} pièce au lieu de ${eur(a.n)}.`;
+  return base + '\n' + lien(a);
+}
+
+// Étiquette de prix
+function tagHTML(a) {
+  const sit = a.m === 'v' ? `<div class="shop">${esc(a.f)} y va ${esc(a.w || 'bientôt')}</div>` : '';
+  return `<div class="tag">
+    <div class="prod">${esc(a.p)}</div>
+    <div class="shop">${esc(a.s)}</div>${sit}
+    <span class="promo">${esc(a.t)}</span>
+    <div class="price"><span class="now">${eur(prixCession(a))}</span><span class="was">${eur(a.n)}</span><span class="per">l'article</span></div>
+  </div>`;
+}
+function calcHTML(a) {
+  return `<div class="calc">
+    <div><span>L'article cédé t'a coûté</span><span>${eur(coutEnPlus(a))}</span></div>
+    <div><span>Dédommagement (25${NB}% de ${eur(a.n)})</span><span>${eur(r2(0.25 * a.n))}</span></div>
+    <div><span>Prix pour tes proches</span><span>${eur(prixCession(a))}</span></div>
+  </div>`;
+}
+
+/* ---------- Formulaire ---------- */
+const form = $('#form');
+$('#prenom').value = getP(KP);
+
+function lireForm() {
+  const mode = form.querySelector('[name=mode]:checked').value;
+  const pv = $('#promo').value;
+  let t, r;
+  if (pv === 'autre') {
+    r = parseFloat(($('#pct').value || '').replace(',', '.'));
+    t = isNaN(r) ? '' : `Remise de ${r}${NB}%`;
+  } else { [t, r] = pv.split('|'); r = +r; }
+  return {
+    m: mode, w: $('#quand').value.trim(), p: $('#produit').value.trim(), s: $('#magasin').value.trim(),
+    t, r, n: parseFloat(($('#normal').value || '').replace(',', '.')),
+    q: parseInt($('#nb').value, 10), d: $('#dlc').value, f: $('#prenom').value.trim()
+  };
+}
+
+function majForm() {
+  const a = lireForm();
+  $('#f-quand').hidden = a.m !== 'v';
+  $('#f-autre').hidden = $('#promo').value !== 'autre';
+  const prixOk = a.n > 0 && !isNaN(a.r) && a.r >= 0 && a.r <= 100;
+  let html = '';
+  if (prixOk && !eligible(a)) {
+    html = `<div class="warn">Cette promo ne se partage pas dans Tieni&#8239;: l'article cédé doit être remisé d'au moins 50&#8239;%.</div>`;
+  } else if (prixOk) {
+    html = tagHTML({ ...a, p: a.p || 'Ton produit', s: a.s || 'Magasin', f: a.f || 'Tu' }) + calcHTML(a);
+  }
+  $('#preview').innerHTML = html;
+  $('#creer').disabled = !(prixOk && eligible(a) && a.p && a.s && a.f && a.q >= 1);
+}
+form.addEventListener('input', majForm);
+form.addEventListener('change', majForm);
+
+let derniere = null;
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  const a = lireForm();
+  if (!(a.n > 0 && eligible(a) && a.p && a.s && a.f && a.q >= 1)) return;
+  a.i = uid(); a.cree = Date.now(); a.res = [];
+  const list = load(); list.unshift(a); save(list);
+  setP(KP, a.f);
+  derniere = a;
+  $('#partage-tag').innerHTML = tagHTML(a);
+  montrer('partage');
+});
+
+$('#partager').onclick = () => derniere && partager(texteAnnonce(derniere));
+$('#copier').onclick = async () => {
+  if (!derniere) return;
+  try { await navigator.clipboard.writeText(lien(derniere)); toast('Lien copié.'); }
+  catch { prompt('Copie ce lien :', lien(derniere)); }
+};
+$('#encore').onclick = () => {
+  const prenom = $('#prenom').value;
+  form.reset(); $('#prenom').value = prenom; majForm(); montrer('nouvelle');
+};
+
+/* ---------- Mes annonces ---------- */
+function reserve(a) { return a.res.reduce((s, r) => s + r.q, 0); }
+
+function renderListe() {
+  const list = load();
+  if (!list.length) {
+    $('#liste').innerHTML = `<div class="empty">Aucune annonce pour l'instant. Crée ta première depuis l'onglet «&#8239;Nouvelle&#8239;».</div>`;
+    return;
+  }
+  const t = today();
+  $('#liste').innerHTML = list.map(a => {
+    const pris = reserve(a), reste = a.q - pris, perime = a.d && a.d < t;
+    const rows = a.res.map(r => `
+      <div class="res">
+        <div><span class="who">${esc(r.nom)}</span>, ${r.q} × ${eur(prixCession(a))} = <strong>${eur(r2(r.q * prixCession(a)))}</strong></div>
+        <div class="chips">
+          <button class="chip" data-act="remis" data-a="${a.i}" data-r="${r.id}" aria-pressed="${!!r.remis}">Remis</button>
+          <button class="chip" data-act="paye" data-a="${a.i}" data-r="${r.id}" aria-pressed="${!!r.paye}">Payé</button>
+          <button class="link danger" data-act="suppr-res" data-a="${a.i}" data-r="${r.id}" aria-label="Retirer la réservation de ${esc(r.nom)}">Retirer</button>
+        </div>
+      </div>`).join('');
+    const opts = Array.from({ length: Math.max(reste, 0) }, (_, k) => `<option>${k + 1}</option>`).join('');
+    const ajout = reste > 0 ? `
+      <div class="add">
+        <input placeholder="Prénom" aria-label="Prénom de la personne" id="nom-${a.i}">
+        <select aria-label="Quantité" id="q-${a.i}">${opts}</select>
+        <button class="btn" data-act="ajout" data-a="${a.i}">Noter</button>
+      </div>` : '';
+    return `<article class="card${perime ? ' old' : ''}">
+      <h3>${esc(a.p)}</h3>
+      <div class="meta">${esc(a.s)}, ${esc(a.t)}, ${eur(prixCession(a))} l'article${a.m === 'v' ? `, tu y vas ${esc(a.w || 'bientôt')}` : ''}</div>
+      ${a.d ? `<div class="meta">${perime ? 'Date dépassée' : 'À consommer avant'} le ${fmtDate(a.d)}</div>` : ''}
+      <div class="stock">${reste > 0 ? `${pris} réservé${pris > 1 ? 's' : ''} sur ${a.q}, reste ${reste}` : `Tout est réservé (${a.q})`}</div>
+      ${rows}${ajout}
+      <div class="actions">
+        <button class="link" data-act="repartager" data-a="${a.i}">Repartager</button>
+        <button class="link danger" data-act="suppr" data-a="${a.i}">Supprimer l'annonce</button>
+      </div>
+    </article>`;
+  }).join('');
+}
+
+$('#liste').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const list = load(); const a = list.find(x => x.i === b.dataset.a); if (!a) return;
+  const act = b.dataset.act;
+  if (act === 'ajout') {
+    const nom = $('#nom-' + a.i).value.trim();
+    const q = parseInt($('#q-' + a.i).value, 10);
+    if (!nom) { $('#nom-' + a.i).focus(); return; }
+    a.res.push({ id: uid(), nom, q, remis: false, paye: false });
+  } else if (act === 'remis' || act === 'paye') {
+    const r = a.res.find(x => x.id === b.dataset.r); if (r) r[act] = !r[act];
+  } else if (act === 'suppr-res') {
+    a.res = a.res.filter(x => x.id !== b.dataset.r);
+  } else if (act === 'repartager') {
+    partager(texteAnnonce(a)); return;
+  } else if (act === 'suppr') {
+    if (!confirm(`Supprimer l'annonce «${NB}${a.p}${NB}» et ses réservations${NB}?`)) return;
+    save(list.filter(x => x.i !== a.i)); renderListe(); return;
+  }
+  save(list); renderListe();
+});
+
+/* ---------- Comptes ---------- */
+function renderComptes() {
+  const par = {};
+  load().forEach(a => a.res.filter(r => !r.paye).forEach(r => {
+    const k = r.nom.trim(); const key = k.toLowerCase();
+    (par[key] ||= { nom: k, total: 0, lignes: [] });
+    const m = r2(r.q * prixCession(a));
+    par[key].total = r2(par[key].total + m);
+    par[key].lignes.push(`${r.q} × ${a.p} (${eur(m)})`);
+  }));
+  const gens = Object.entries(par).sort((x, y) => y[1].total - x[1].total);
+  if (!gens.length) { $('#dettes').innerHTML = `<div class="empty">Tout le monde est à jour.</div>`; return; }
+  $('#dettes').innerHTML = gens.map(([key, g]) => `
+    <div class="card">
+      <div class="debt"><span class="who">${esc(g.nom)}</span><strong>${eur(g.total)}</strong></div>
+      <div class="debt-lines">${g.lignes.map(esc).join('<br>')}</div>
+      <button class="link" data-solder="${esc(key)}">${esc(g.nom)} a tout payé</button>
+    </div>`).join('');
+}
+$('#dettes').addEventListener('click', e => {
+  const b = e.target.closest('[data-solder]'); if (!b) return;
+  const key = b.dataset.solder;
+  const list = load();
+  list.forEach(a => a.res.forEach(r => { if (r.nom.trim().toLowerCase() === key) r.paye = true; }));
+  save(list); renderComptes();
+});
+
+/* ---------- Vue destinataire ---------- */
+function renderRecu(a) {
+  const perime = a.d && a.d < today();
+  let k = 1;
+  const html = `
+    ${tagHTML(a)}
+    <p class="note">${esc(a.f)} ${a.m === 'v' ? 'peut en prendre' : 'en cède'} ${a.q}. ${a.d ? `À consommer avant le ${fmtDate(a.d)}.` : ''}</p>
+    ${perime ? `<div class="warn">Cette annonce a expiré le ${fmtDate(a.d)}.</div>` : `
+      <h2>Tu en veux&#8239;?</h2>
+      <div class="field">
+        <label>Combien</label>
+        <div class="qty"><button id="moins" aria-label="Un de moins">−</button><output id="k">1</output><button id="plus" aria-label="Un de plus">+</button></div>
+      </div>
+      <div class="field"><label for="dest">Ton prénom</label><input id="dest" autocomplete="given-name" value="${esc(getP(KD))}"></div>
+      <div class="total" id="tot"></div>
+      <button class="btn" id="prendre">Répondre à ${esc(a.f)}</button>
+      <p class="note">Ta réponse part par WhatsApp, SMS ou l'appli de ton choix. ${esc(a.f)} note ta réservation de son côté.</p>`}
+    <p class="note"><a href="./" class="link">Créer ma propre annonce</a></p>`;
+  $('#recu').innerHTML = html;
+  if (perime) return;
+  const maj = () => { $('#k').textContent = k; $('#tot').textContent = `Total${NB}: ${eur(r2(k * prixCession(a)))}`; };
+  $('#moins').onclick = () => { if (k > 1) { k--; maj(); } };
+  $('#plus').onclick = () => { if (k < a.q) { k++; maj(); } };
+  $('#prendre').onclick = () => {
+    const nom = $('#dest').value.trim();
+    if (!nom) { $('#dest').focus(); toast('Indique ton prénom.'); return; }
+    setP(KD, nom);
+    partager(`Tieni${NB}: je prends ${k} × ${a.p} (${a.s}), soit ${eur(r2(k * prixCession(a)))}. ${nom}`);
+  };
+  maj();
+}
+
+/* ---------- Navigation ---------- */
+function montrer(v) {
+  ['nouvelle', 'partage', 'annonces', 'comptes', 'recu'].forEach(x => $('#v-' + x).hidden = x !== v);
+  const onglet = v === 'partage' ? 'nouvelle' : v;
+  document.querySelectorAll('#nav button').forEach(b => b.setAttribute('aria-current', b.dataset.view === onglet));
+  $('#nav').hidden = v === 'recu';
+  if (v === 'annonces') renderListe();
+  if (v === 'comptes') renderComptes();
+  window.scrollTo(0, 0);
+}
+$('#nav').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (b) montrer(b.dataset.view);
+});
+
+function route() {
+  const h = location.hash;
+  if (h.startsWith('#a=')) {
+    try { renderRecu(dec(h.slice(3))); montrer('recu'); return; }
+    catch { toast('Ce lien est incomplet ou abîmé.'); }
+  }
+  montrer('nouvelle'); majForm();
+}
+window.addEventListener('hashchange', route);
+route();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => {}));
+}
+</script>
+</body>
+</html>
