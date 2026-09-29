@@ -56,10 +56,15 @@ label { display: block; font-weight: 600; margin-bottom: .3rem; }
 input, select {
   font: inherit; width: 100%; padding: .65rem .75rem;
   border: 2px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink);
+  min-width: 0; max-width: 100%;
 }
+input[type="date"] { -webkit-appearance: none; appearance: none; min-height: 2.95rem; display: block; }
+html, body { overflow-x: hidden; }
 input:focus, select:focus, button:focus-visible { outline: 3px solid var(--tag); outline-offset: 2px; border-color: var(--green); }
-.row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .75rem; }
 
+.check { display: flex; align-items: center; gap: .6rem; font-weight: 600; margin: -.25rem 0 1rem; cursor: pointer; }
+.check input { width: 1.4rem; height: 1.4rem; flex: none; accent-color: var(--green); }
 .switch { display: flex; gap: .5rem; margin-bottom: 1rem; }
 .switch label { flex: 1; margin: 0; }
 .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
@@ -92,7 +97,8 @@ input:focus, select:focus, button:focus-visible { outline: 3px solid var(--tag);
 .calc { background: var(--paper); border-radius: 10px; padding: .75rem 1rem; margin-bottom: 1rem; color: var(--muted); }
 .calc div { display: flex; justify-content: space-between; gap: 1rem; }
 .calc span:last-child { white-space: nowrap; }
-.calc div:last-child { color: var(--ink); font-weight: 700; border-top: 1px solid var(--line); margin-top: .35rem; padding-top: .35rem; }
+.calc .sum { color: var(--ink); font-weight: 700; }
+.calc div:not(.sum) + .sum { border-top: 1px solid var(--line); margin-top: .35rem; padding-top: .35rem; }
 .warn { background: #FBE9E7; color: #7A1F19; border-radius: 10px; padding: .75rem 1rem; margin-bottom: 1rem; }
 .note { color: var(--muted); margin: .75rem 0; }
 
@@ -106,7 +112,7 @@ input:focus, select:focus, button:focus-visible { outline: 3px solid var(--tag);
 .chips { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
 .chip { font: inherit; font-size: 1rem; padding: .3rem .65rem; border-radius: 999px; border: 2px solid var(--line); background: var(--paper); color: var(--muted); cursor: pointer; }
 .chip[aria-pressed="true"] { border-color: var(--ok); background: var(--ok); color: #fff; }
-.add { display: grid; grid-template-columns: 1fr 5rem auto; gap: .5rem; margin-top: .75rem; }
+.add { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 7.5rem) auto; gap: .5rem; margin-top: .75rem; }
 .add .btn { width: auto; padding: .6rem .9rem; }
 .actions { display: flex; gap: 1.25rem; flex-wrap: wrap; margin-top: .75rem; }
 
@@ -158,7 +164,7 @@ input:focus, select:focus, button:focus-visible { outline: 3px solid var(--tag);
         </div>
         <div class="field">
           <label for="magasin">Magasin</label>
-          <input id="magasin" placeholder="Delhaize Roodebeek" autocomplete="off">
+          <input id="magasin" placeholder="Delhaize Alsemberg" autocomplete="off">
         </div>
 
         <div class="row">
@@ -185,15 +191,14 @@ input:focus, select:focus, button:focus-visible { outline: 3px solid var(--tag);
           <input id="pct" inputmode="numeric" placeholder="60" autocomplete="off">
         </div>
 
-        <div class="row">
-          <div class="field">
-            <label for="nb">Articles à céder</label>
-            <input id="nb" type="number" min="1" max="30" value="2" inputmode="numeric">
-          </div>
-          <div class="field">
-            <label for="dlc">À consommer avant <span class="hint">(facultatif)</span></label>
-            <input id="dlc" type="date">
-          </div>
+        <div class="field">
+          <label for="nb">Articles à céder</label>
+          <input id="nb" type="number" min="1" max="30" value="2" inputmode="numeric">
+        </div>
+        <label class="check"><input type="checkbox" id="enlot"><span>Céder ensemble, en un seul lot</span></label>
+        <div class="field">
+          <label for="dlc">À consommer avant <span class="hint">(facultatif)</span></label>
+          <input id="dlc" type="date">
         </div>
 
         <div class="field">
@@ -254,6 +259,11 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 
 const coutEnPlus = a => r2(a.n * (1 - a.r / 100));
 const prixCession = a => r2(coutEnPlus(a) + 0.25 * a.n);
 const eligible = a => a.r >= 50;
+const L = a => a.l || 1;
+const prixLot = a => r2(prixCession(a) * L(a));
+const lotOk = a => a.q >= L(a) && a.q % L(a) === 0;
+// Quantité lisible : « 3 » ou « 1 lot de 2 »
+const qte = (n, a) => { if (L(a) === 1) return String(n); const k = n / L(a); return `${k} lot${k > 1 ? 's' : ''} de ${L(a)}`; };
 
 // Stockage local (préfixe tieni:)
 function load() { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } }
@@ -272,7 +282,7 @@ function dec(s) {
   const bin = atob(b64 + '==='.slice((b64.length + 3) % 4));
   return JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))));
 }
-const pub = a => ({ i: a.i, m: a.m, p: a.p, s: a.s, t: a.t, r: a.r, n: a.n, q: a.q, d: a.d, w: a.w, f: a.f });
+const pub = a => ({ i: a.i, m: a.m, p: a.p, s: a.s, t: a.t, r: a.r, n: a.n, q: a.q, l: L(a), d: a.d, w: a.w, f: a.f });
 const lien = a => location.origin + location.pathname + '#a=' + enc(pub(a));
 
 function toast(msg) {
@@ -290,9 +300,12 @@ async function partager(texte) {
 }
 
 function texteAnnonce(a) {
+  const prix = L(a) > 1
+    ? `${eur(prixLot(a))} le lot de ${L(a)} (${eur(prixCession(a))} l'article) au lieu de ${eur(r2(a.n * L(a)))}`
+    : `${eur(prixCession(a))} pièce au lieu de ${eur(a.n)}`;
   const base = a.m === 'v'
-    ? `Tieni${NB}: ${a.t} sur ${a.p} chez ${a.s}. J'y vais ${a.w || 'bientôt'}. Qui en veut${NB}? ${eur(prixCession(a))} pièce au lieu de ${eur(a.n)}, ${a.q} disponible${a.q > 1 ? 's' : ''}.`
-    : `Tieni${NB}: ${a.t} sur ${a.p} chez ${a.s}. J'en cède ${a.q}, à ${eur(prixCession(a))} pièce au lieu de ${eur(a.n)}.`;
+    ? `Tieni${NB}: ${a.t} sur ${a.p} chez ${a.s}. J'y vais ${a.w || 'bientôt'}. Qui en veut${NB}? ${prix}, ${qte(a.q, a)} disponible${a.q > 1 ? 's' : ''}.`
+    : `Tieni${NB}: ${a.t} sur ${a.p} chez ${a.s}. J'en cède ${qte(a.q, a)}, à ${prix}.`;
   return base + '\n' + lien(a);
 }
 
@@ -303,14 +316,18 @@ function tagHTML(a) {
     <div class="prod">${esc(a.p)}</div>
     <div class="shop">${esc(a.s)}</div>${sit}
     <span class="promo">${esc(a.t)}</span>
-    <div class="price"><span class="now">${eur(prixCession(a))}</span><span class="was">${eur(a.n)}</span><span class="per">l'article</span></div>
+    ${L(a) > 1
+      ? `<div class="price"><span class="now">${eur(prixLot(a))}</span><span class="was">${eur(r2(a.n * L(a)))}</span><span class="per">le lot de ${L(a)}</span></div>
+         <div class="per">soit ${eur(prixCession(a))} l'article</div>`
+      : `<div class="price"><span class="now">${eur(prixCession(a))}</span><span class="was">${eur(a.n)}</span><span class="per">l'article</span></div>`}
   </div>`;
 }
 function calcHTML(a) {
   return `<div class="calc">
     <div><span>L'article cédé t'a coûté</span><span>${eur(coutEnPlus(a))}</span></div>
     <div><span>Dédommagement (25${NB}% de ${eur(a.n)})</span><span>${eur(r2(0.25 * a.n))}</span></div>
-    <div><span>Prix pour tes proches</span><span>${eur(prixCession(a))}</span></div>
+    <div class="sum"><span>Prix par article</span><span>${eur(prixCession(a))}</span></div>
+    ${L(a) > 1 ? `<div class="sum"><span>Prix du lot de ${L(a)}</span><span>${eur(prixLot(a))}</span></div>` : ''}
   </div>`;
 }
 
@@ -329,7 +346,7 @@ function lireForm() {
   return {
     m: mode, w: $('#quand').value.trim(), p: $('#produit').value.trim(), s: $('#magasin').value.trim(),
     t, r, n: parseFloat(($('#normal').value || '').replace(',', '.')),
-    q: parseInt($('#nb').value, 10), d: $('#dlc').value, f: $('#prenom').value.trim()
+    q: parseInt($('#nb').value, 10), l: $('#enlot').checked ? Math.max(parseInt($('#nb').value, 10) || 1, 1) : 1, d: $('#dlc').value, f: $('#prenom').value.trim()
   };
 }
 
@@ -345,7 +362,7 @@ function majForm() {
     html = tagHTML({ ...a, p: a.p || 'Ton produit', s: a.s || 'Magasin', f: a.f || 'Tu' }) + calcHTML(a);
   }
   $('#preview').innerHTML = html;
-  $('#creer').disabled = !(prixOk && eligible(a) && a.p && a.s && a.f && a.q >= 1);
+  $('#creer').disabled = !(prixOk && eligible(a) && lotOk(a) && a.p && a.s && a.f && a.q >= 1);
 }
 form.addEventListener('input', majForm);
 form.addEventListener('change', majForm);
@@ -354,7 +371,7 @@ let derniere = null;
 form.addEventListener('submit', e => {
   e.preventDefault();
   const a = lireForm();
-  if (!(a.n > 0 && eligible(a) && a.p && a.s && a.f && a.q >= 1)) return;
+  if (!(a.n > 0 && eligible(a) && lotOk(a) && a.p && a.s && a.f && a.q >= 1)) return;
   a.i = uid(); a.cree = Date.now(); a.res = [];
   const list = load(); list.unshift(a); save(list);
   setP(KP, a.f);
@@ -388,14 +405,14 @@ function renderListe() {
     const pris = reserve(a), reste = a.q - pris, perime = a.d && a.d < t;
     const rows = a.res.map(r => `
       <div class="res">
-        <div><span class="who">${esc(r.nom)}</span>, ${r.q} × ${eur(prixCession(a))} = <strong>${eur(r2(r.q * prixCession(a)))}</strong></div>
+        <div><span class="who">${esc(r.nom)}</span>, ${qte(r.q, a)} = <strong>${eur(r2(r.q * prixCession(a)))}</strong></div>
         <div class="chips">
           <button class="chip" data-act="remis" data-a="${a.i}" data-r="${r.id}" aria-pressed="${!!r.remis}">Remis</button>
           <button class="chip" data-act="paye" data-a="${a.i}" data-r="${r.id}" aria-pressed="${!!r.paye}">Payé</button>
           <button class="link danger" data-act="suppr-res" data-a="${a.i}" data-r="${r.id}" aria-label="Retirer la réservation de ${esc(r.nom)}">Retirer</button>
         </div>
       </div>`).join('');
-    const opts = Array.from({ length: Math.max(reste, 0) }, (_, k) => `<option>${k + 1}</option>`).join('');
+    const opts = Array.from({ length: Math.max(reste / L(a), 0) }, (_, k) => `<option value="${(k + 1) * L(a)}">${L(a) > 1 ? qte((k + 1) * L(a), a) : k + 1}</option>`).join('');
     const ajout = reste > 0 ? `
       <div class="add">
         <input placeholder="Prénom" aria-label="Prénom de la personne" id="nom-${a.i}">
@@ -404,9 +421,11 @@ function renderListe() {
       </div>` : '';
     return `<article class="card${perime ? ' old' : ''}">
       <h3>${esc(a.p)}</h3>
-      <div class="meta">${esc(a.s)}, ${esc(a.t)}, ${eur(prixCession(a))} l'article${a.m === 'v' ? `, tu y vas ${esc(a.w || 'bientôt')}` : ''}</div>
+      <div class="meta">${esc(a.s)}, ${esc(a.t)}, ${L(a) > 1 ? `${eur(prixLot(a))} le lot de ${L(a)}, soit ${eur(prixCession(a))} l'article` : `${eur(prixCession(a))} l'article`}${a.m === 'v' ? `, tu y vas ${esc(a.w || 'bientôt')}` : ''}</div>
       ${a.d ? `<div class="meta">${perime ? 'Date dépassée' : 'À consommer avant'} le ${fmtDate(a.d)}</div>` : ''}
-      <div class="stock">${reste > 0 ? `${pris} réservé${pris > 1 ? 's' : ''} sur ${a.q}, reste ${reste}` : `Tout est réservé (${a.q})`}</div>
+      <div class="stock">${L(a) > 1
+        ? (reste > 0 ? `${pris / L(a)} lot${pris / L(a) > 1 ? 's' : ''} réservé${pris / L(a) > 1 ? 's' : ''} sur ${a.q / L(a)}, reste ${reste / L(a)}` : `Tous les lots sont réservés (${a.q / L(a)})`)
+        : (reste > 0 ? `${pris} réservé${pris > 1 ? 's' : ''} sur ${a.q}, reste ${reste}` : `Tout est réservé (${a.q})`)}</div>
       ${rows}${ajout}
       <div class="actions">
         <button class="link" data-act="repartager" data-a="${a.i}">Repartager</button>
@@ -446,7 +465,7 @@ function renderComptes() {
     (par[key] ||= { nom: k, total: 0, lignes: [] });
     const m = r2(r.q * prixCession(a));
     par[key].total = r2(par[key].total + m);
-    par[key].lignes.push(`${r.q} × ${a.p} (${eur(m)})`);
+    par[key].lignes.push(`${L(a) > 1 ? qte(r.q, a) : r.q + ' ×'} ${a.p} (${eur(m)})`);
   }));
   const gens = Object.entries(par).sort((x, y) => y[1].total - x[1].total);
   if (!gens.length) { $('#dettes').innerHTML = `<div class="empty">Tout le monde est à jour.</div>`; return; }
@@ -471,11 +490,11 @@ function renderRecu(a) {
   let k = 1;
   const html = `
     ${tagHTML(a)}
-    <p class="note">${esc(a.f)} ${a.m === 'v' ? 'peut en prendre' : 'en cède'} ${a.q}. ${a.d ? `À consommer avant le ${fmtDate(a.d)}.` : ''}</p>
+    <p class="note">${esc(a.f)} ${a.m === 'v' ? 'peut en prendre' : 'en cède'} ${qte(a.q, a)}. ${a.d ? `À consommer avant le ${fmtDate(a.d)}.` : ''}</p>
     ${perime ? `<div class="warn">Cette annonce a expiré le ${fmtDate(a.d)}.</div>` : `
       <h2>Tu en veux&#8239;?</h2>
       <div class="field">
-        <label>Combien</label>
+        <label>${L(a) > 1 ? 'Combien de lots' : 'Combien'}</label>
         <div class="qty"><button id="moins" aria-label="Un de moins">−</button><output id="k">1</output><button id="plus" aria-label="Un de plus">+</button></div>
       </div>
       <div class="field"><label for="dest">Ton prénom</label><input id="dest" autocomplete="given-name" value="${esc(getP(KD))}"></div>
@@ -485,14 +504,17 @@ function renderRecu(a) {
     <p class="note"><a href="./" class="link">Créer ma propre annonce</a></p>`;
   $('#recu').innerHTML = html;
   if (perime) return;
-  const maj = () => { $('#k').textContent = k; $('#tot').textContent = `Total${NB}: ${eur(r2(k * prixCession(a)))}`; };
+  const max = a.q / L(a);
+  const montant = () => r2(k * L(a) * prixCession(a));
+  const maj = () => { $('#k').textContent = k; $('#tot').textContent = `Total${NB}: ${eur(montant())}`; };
   $('#moins').onclick = () => { if (k > 1) { k--; maj(); } };
-  $('#plus').onclick = () => { if (k < a.q) { k++; maj(); } };
+  $('#plus').onclick = () => { if (k < max) { k++; maj(); } };
   $('#prendre').onclick = () => {
     const nom = $('#dest').value.trim();
     if (!nom) { $('#dest').focus(); toast('Indique ton prénom.'); return; }
     setP(KD, nom);
-    partager(`Tieni${NB}: je prends ${k} × ${a.p} (${a.s}), soit ${eur(r2(k * prixCession(a)))}. ${nom}`);
+    const quoi = L(a) > 1 ? `${qte(k * L(a), a)} ${a.p}` : `${k} × ${a.p}`;
+    partager(`Tieni${NB}: je prends ${quoi} (${a.s}), soit ${eur(montant())}. ${nom}`);
   };
   maj();
 }

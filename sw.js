@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tieni-v1';
+const CACHE_NAME = 'tieni-v5';
 const CORE = ['./', './index.html', './manifest.json', './icon.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
